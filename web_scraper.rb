@@ -10,40 +10,46 @@ class Scraper
 
 attr_accessor :parsePage, :articles, :allArticles, :domine, :page
 
-  def initialize
-    @domine = 'https://www.lostiempos.com'
-    @page = HTTParty.get("https://www.lostiempos.com/")
-    @parsePage ||= Nokogiri::HTML(page, Encoding::UTF_8.to_s)
-    @articlesSelector = parsePage.css('.views-row, table .col-1, table .col-2, table .col-3, table .col-4')
+  def initialize(domine)
+    @domine = domine
+    @page = HTTParty.get(@domine)
+    @parsePage ||= Nokogiri::HTML(@page, Encoding::UTF_8.to_s)
+    @articleSelector = parsePage.css('.views-row, table .col-1, table .col-2, table .col-3, table .col-4')
     @articles = Array[];
   end
 
   def getArticle()
-    @articlesSelector.map do | article |
+   @articleSelector.map do | article |
       article.css('.views-field-title a').map do | news |
-        bodyNews = "";
-        article.css('.sin-sumario').map do | body |
-          if (body.text != "")
-            bodyNews = body.text.strip().tr("\n","")
-          end
+        if (news['href'])
+          newsUrl = @domine+news['href']
+          news = Nokogiri::HTML(HTTParty.get(newsUrl), Encoding::UTF_8.to_s)
+          getNewsInfo(news, newsUrl)
         end
-        md5 = getMD5(news['href'], news.text)
-        url = domine + news['href']
-        newsTitle = news.text.strip().tr("\n"," ")
-        @articles.push(News.new(url, newsTitle , bodyNews, getNewDate(), md5))
       end
     end
     CSVgenerate()
   end
 
-  def CSVgenerate
-    index = 0;
-    CSV.open("../opinion/DatosDaniel.csv", "a") do |doc|
-      @articles.each do |arti|
-        doc << [arti.uri, arti.title, arti.body, arti.dateScraper, arti.md5]
-      end
+  def getNewsInfo(news, url)
+    titleEndUrlSelector = news.css('.node-header h1')
+    bodySelector = news.css('.body p, .content p')
+    title = getTitles(titleEndUrlSelector)
+    body = getBody(bodySelector)
+    date = getNewDate()
+    md5 = getMD5(url, body)
+    @articles.push(News.new(url, title , body, date, md5))
+  end
+
+  def getTitles(titles)
+    return titles.each do | data |
+      return (data.text) ? data.text.strip() : ""
     end
-  end 
+  end
+
+  def getBody(body)
+    return body.text.tr("\n","").strip()[0...100]+"..."
+  end
 
   def getNewDate
     time = Time.now
@@ -54,7 +60,15 @@ attr_accessor :parsePage, :articles, :allArticles, :domine, :page
     return Digest::MD5.hexdigest(url+body)
   end
 
-  scraper = Scraper.new
+  def CSVgenerate
+    index = 0;
+    CSV.open("./lostiempos.csv", "a") do |doc|
+      @articles.each do |arti|
+        doc << [arti.uri, arti.title, arti.body, arti.dateScraper, arti.md5]
+      end
+    end
+  end 
+  
+  scraper = Scraper.new('https://www.lostiempos.com')
   scraper.getArticle()
-
 end
