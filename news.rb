@@ -1,8 +1,8 @@
 class News 
-  attr_reader :uri, :title, :body, :dateScraper, :md5
+  attr_reader :url, :title, :body, :dateScraper, :md5
 
-    def initialize(uri, title, body, dateScraper, md5) 
-      @uri = uri
+    def initialize(url, title, body, dateScraper, md5) 
+      @url = url
       @title = title
       @body = body
       @dateScraper = dateScraper 
