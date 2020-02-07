@@ -1,6 +1,8 @@
 require 'csv'
 require './lostiemposStrategy.rb'
 require './opinionStrategy.rb'
+require './GenerateCSV.rb'
+require './GenerateTXT.rb'
 
 class Scraper
 
@@ -8,33 +10,26 @@ attr_accessor :articles, :pages, :articlesData
 
   def initialize
     @articlesData = Array[]
-    @pages = Array [
+    @resources = Array [
       {
         "strategy" => "LosTiemposStrategy",
-        "page" => "https://www.lostiempos.com"
+        "page" => "https://www.lostiempos.com",
+        "typeDocument" => "GenerateCSV"
       },
       {
         "strategy" => "OpinionStrategy",
-        "page" => "https://www.opinion.com.bo"
+        "page" => "https://www.opinion.com.bo",
+        "typeDocument" => "GenerateTXT"
       }
     ]
   end
 
   def getData
-    @pages.each do |page|
-      strategy = Object.const_get(page["strategy"]).new(page)
-      @articlesData = @articlesData | strategy.getArticle()
-    end
-    CSVgenerate()
-  end
-
-  def CSVgenerate
-    index = 0;
-    CSV.open("./danielDatos.csv", "a") do |doc|
-      @articlesData.each do |arti|
-        index = index + 1
-        doc << [index, arti.url, arti.title, arti.body, arti.dateScraper, arti.md5]
-      end
+    @resources.each do |data|
+      strategy = Object.const_get(data["strategy"]).new(data)
+      @articlesData = strategy.getArticle()
+      newDocument = Object.const_get(data["typeDocument"]).new(@articlesData)
+      newDocument.generateDocument()
     end
   end 
   

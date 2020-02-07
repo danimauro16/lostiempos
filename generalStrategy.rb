@@ -10,7 +10,7 @@ class GeneralStrategy
     @strategies = strategies
   end
 
-  def loadPage(page)
+  def loadPrincipalPage(page)
     @domine = page
     @page = HTTParty.get(@domine)
     @parsePage ||= Nokogiri::HTML(@page.body, Encoding::UTF_8.to_s)
@@ -18,6 +18,9 @@ class GeneralStrategy
   end
 
   def getArticle
+  end
+
+  def generateDocument
   end
 
   def getSubPage(url)

@@ -1,4 +1,5 @@
 require './generalStrategy.rb'
+require './news.rb'
 
 class LosTiemposStrategy < GeneralStrategy
   
@@ -10,7 +11,7 @@ class LosTiemposStrategy < GeneralStrategy
   end
 
   def getArticle
-    page = loadPage(@domine)
+    page = loadPrincipalPage(@domine)
     page.css('.views-field-title a').map do | news |
       newsUrl = @domine+news['href']
       news = getSubPage(newsUrl)
